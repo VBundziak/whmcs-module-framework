@@ -7,6 +7,7 @@ use ErrorException;
 use /** @noinspection PhpUndefinedClassInspection */
     /** @noinspection PhpUndefinedNamespaceInspection */
     Illuminate\Database\Capsule\Manager;
+use Symfony\Component\HttpFoundation\Request;
 
 class Helper
 {
@@ -158,5 +159,36 @@ class Helper
     {
         /** @noinspection PhpUndefinedConstantInspection */
         return rtrim(ROOTDIR, '/');
+    }
+
+    /**
+     * Checking allowed client IP connecting to the WHMCS API
+     *
+     * @param Request $request
+     * @return bool
+     * @throws ErrorException
+     */
+    public static function checkAllowedClientIP(Request $request)
+    {
+        // Get client IP
+        $clientIP = $request->getClientIp();
+
+        // Get config value APIAllowedIPs
+        $result = unserialize(self::getConfigValue('APIAllowedIPs'));
+
+        $allowedIPs = [];
+        foreach ($result as $item) {
+            if(!empty($item["ip"])) {
+                $allowedIPs[] = $item["ip"];
+            }
+        }
+
+        if(in_array($clientIP, $allowedIPs)) {
+            $allowStatus = true;
+        } else {
+            $allowStatus = false;
+        }
+
+        return $allowStatus;
     }
 }
